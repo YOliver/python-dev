@@ -164,7 +164,10 @@ __pycache__/
 *.spec
 *.pyc
 .env
+.codebuddy
 ```
+
+**注意：** `.codebuddy` 目录包含 CodeBuddy 的会话数据等，不应提交到 git。
 
 ## README.md 更新规则
 
