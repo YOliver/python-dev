@@ -7,14 +7,14 @@ description: Use when developing Python desktop applications in this project - r
 
 ## Overview
 
-项目级 Python 桌面应用开发 skill，管理启动和发布流程。自动检测并维护 `start.bat`（一键启动）和 `release.bat`（一键构建发布包），确保发布时同步更新 README.md。
+项目级 Python 桌面应用开发 skill，管理启动和打包流程。自动检测并维护 `start.bat`（一键启动）和 `release.bat`（一键构建打包），确保打包时同步更新 README.md。
 
 ## When to Use
 
 - 用户想要**运行/启动程序**时
-- 用户想要**构建安装包/打包发布**时
+- 用户想要**构建安装包/打包**时
 - 用户提到 "start"、"run"、"启动"、"运行"
-- 用户提到 "build"、"release"、"打包"、"发布"、"构建"
+- 用户提到 "build"、"release"、"打包"、"构建"
 
 ## 启动程序流程
 
@@ -42,22 +42,23 @@ pip show <main-dep> >nul 2>&1 || pip install -r requirements.txt
 start "" pythonw <entry>.py %*
 ```
 
-## 构建发布包流程
+## 构建打包流程
 
-当用户要求构建/打包/发布时：
+当用户要求构建/打包时：
 
-1. 确认版本号：检查 `version.py` 是否存在，不存在则创建；询问用户是否需要更新版本号
-2. **更新 helpdocs 文档**（详见 helpdocs 文档更新规则）
-3. **更新 README.md**
-4. 检查项目根目录是否存在 `release.bat`
-5. **存在** → 执行 `release.bat`
-6. **不存在** → 创建 `release.bat`，内容应包含：
+1. 检查 git 管理状态，确保项目已纳入版本控制
+2. 确认版本号：检查 `version.py` 是否存在，不存在则创建；询问用户是否需要更新版本号
+3. **更新 helpdocs 文档**（详见 helpdocs 文档更新规则）
+4. **更新 README.md**
+5. 检查项目根目录是否存在 `release.bat`
+6. **存在** → 继续往下执行
+7. **不存在** → 创建 `release.bat`，内容应包含：
    - 检查并安装 PyInstaller
    - 使用 PyInstaller 打包为单文件可执行程序
    - 使用 Inno Setup 生成安装包
    - 输出到 `dist/` 和 `installer/` 目录
-7. 创建后执行
-8. 检查 git 管理状态，确保项目已纳入版本控制
+8. 检查 git 工作区状态，如有未提交的修改，询问用户是否先提交（用户同意则提交后再继续，拒绝则跳过）
+9. 执行 `release.bat`
 
 ### release.bat 模板
 
@@ -67,7 +68,7 @@ release.bat 完整流程：PyInstaller 打包 exe → Inno Setup 生成 Windows 
 @echo off
 cd /d "%~dp0"
 
-echo === Building Release ===
+echo === Building ===
 pip show pyinstaller >nul 2>&1 || pip install pyinstaller
 pyinstaller --onefile --windowed --name <AppName> <entry>.py
 
@@ -133,10 +134,10 @@ VERSION = "1.0.0"
 
 **版本号使用规则：**
 - 主程序、`installer.iss`（AppVersion）、README.md 中的版本号都从 `version.py` 读取或保持一致
-- 每次发布构建时，应确认版本号是否需要更新（询问用户或自动递增 patch 版本）
+- 每次打包构建时，应确认版本号是否需要更新（询问用户或自动递增 patch 版本）
 - 版本格式遵循语义化版本：`MAJOR.MINOR.PATCH`
 
-**发布时版本同步检查清单：**
+**打包时版本同步检查清单：**
 1. `version.py` — 版本号源头
 2. `installer.iss` 中的 `AppVersion` — 必须与 version.py 一致
 3. `README.md` 中如有版本说明 — 同步更新
@@ -144,7 +145,9 @@ VERSION = "1.0.0"
 
 ## Git 管理
 
-打包完成后，**必须**检查项目是否已被 git 管理：
+打包流程中包含两项 git 检查（开始前 + 执行 release.bat 前）：
+
+### 1. 检查项目是否已被 git 管理（对应流程第 1 步）
 
 1. 检查项目根目录是否存在 `.git` 目录
 2. **不存在** → 执行以下操作：
@@ -153,7 +156,15 @@ VERSION = "1.0.0"
    - `git add .`
    - `git commit -m "Initial commit"`
    - 提示用户：远程仓库地址可后续通过 `git remote add origin <url>` 补充
-3. **已存在** → 检查是否有未提交的更改，如有则提交本次发布
+3. **已存在** → 进入下一项检查
+
+### 2. 检查工作区是否有未提交修改（对应流程第 8 步，执行 release.bat 前执行）
+
+1. 执行 `git status --porcelain` 检查工作区
+2. **无未提交修改** → 进入第 9 步执行 `release.bat`
+3. **有未提交修改** → 询问用户是否提交：
+   - 用户同意 → 提交本次打包涉及的更改（version.py、helpdocs、README 等）后，进入第 9 步执行 `release.bat`
+   - 用户拒绝 → 跳过提交，进入第 9 步执行 `release.bat`
 
 ### .gitignore 模板
 
@@ -172,7 +183,7 @@ __pycache__/
 
 ## README.md 更新规则
 
-执行 `release.bat` 构建发布包时，**必须**同步更新 README.md：
+执行 `release.bat` 构建打包时，**必须**同步更新 README.md：
 
 - 如果 README.md 不存在，创建它
 - 更新内容应包含：
@@ -224,7 +235,7 @@ __pycache__/
 
 ### 更新时机
 
-在构建发布包流程中，**构建/打包启动前**，执行 helpdocs 更新（即版本号确认后、release.bat 执行前）：
+在构建打包流程中，**release.bat 执行前**，执行 helpdocs 更新（对应流程第 3 步，位于版本号确认之后、git 工作区检查之前）：
 
 1. 读取 `version.py` 获取版本号
 2. 执行 `git rev-parse HEAD` 获取 commit ID
@@ -238,12 +249,12 @@ __pycache__/
 | 错误 | 正确做法 |
 |------|----------|
 | 不检查脚本是否存在就创建 | 先检查，存在则直接执行 |
-| release 时忘记更新 README | 构建前或构建后必须更新 README.md |
+| 打包时忘记更新 README | 构建前必须更新 README.md |
 | 打包时遗漏依赖 | 确保 requirements.txt 完整 |
 | 只生成 exe 不生成安装包 | release.bat 中必须包含 Inno Setup 打包步骤 |
 | 缺少 installer.iss 就运行 ISCC | 先检查 installer.iss 是否存在，不存在则创建 |
 | start.bat 不检查依赖 | 首次运行应自动安装依赖 |
 | GUI 程序用 `python` 启动导致 cmd 窗口残留 | 使用 `start "" pythonw` 启动，隐藏控制台 |
 | bat 文件中写中文导致乱码和命令解析失败 | **bat 文件必须使用纯 ASCII/英文**，不要用 `chcp 65001`（在部分系统不可靠），中文注释和 echo 输出一律改为英文 |
-| 发布后没有 git 管理 | 打包完成后必须检查并初始化 git，确保代码有版本控制 |
+| 打包前没有 git 管理 | 打包开始前必须检查并初始化 git，确保代码有版本控制 |
 | 没有统一版本号管理 | 使用 `version.py` 作为版本号唯一源头，installer.iss 和 README 同步 |
