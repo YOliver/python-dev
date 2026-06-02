@@ -181,6 +181,57 @@ __pycache__/
   - 快捷键说明（如有）
   - 构建方式
 
+## helpdocs 文档更新规则
+
+执行构建/打包时，**必须**同步更新 `helpdocs/` 目录下的文档。如果文件不存在则创建。
+
+### helpdocs/about.md
+
+版本与环境信息，包含：
+
+| 字段 | 内容来源 |
+|------|----------|
+| 版本号 | `version.py` 中的 VERSION |
+| Commit ID | `git rev-parse HEAD` 获取当前最新提交 |
+| 构建时间 | 构建当天日期（YYYY-MM-DD） |
+| 运行系统 | Windows 10/11 (x64) |
+| 运行环境 | 从 `requirements.txt` 读取依赖及版本要求；Python 版本要求 |
+
+### helpdocs/welcome.md
+
+开发者信息，包含：
+
+| 字段 | 内容来源 |
+|------|----------|
+| 开发者 | `git config user.name` |
+| 邮箱 | `git config user.email` |
+| GitHub 地址 | `git remote get-url origin` |
+
+### helpdocs/使用手册.md
+
+软件使用说明，包含：
+
+- 启动方式（exe / 源码 / 安装包）
+- 打开文件方式（菜单、拖拽、命令行）
+- 菜单栏功能说明
+- 快捷键
+- 自动刷新机制
+- Markdown 渲染支持的语法
+- 典型使用场景
+- 日志与调试
+- 常见问题
+
+### 更新时机
+
+在构建发布包流程中，**README.md 更新之前、git 提交之前**，执行 helpdocs 更新：
+
+1. 读取 `version.py` 获取版本号
+2. 执行 `git rev-parse HEAD` 获取 commit ID
+3. 获取当前日期作为构建时间
+4. 读取 `git config` 获取开发者信息
+5. 更新 `helpdocs/about.md`、`helpdocs/welcome.md`
+6. 检查 `helpdocs/使用手册.md` 中版本号是否需要同步更新
+
 ## Common Mistakes
 
 | 错误 | 正确做法 |
