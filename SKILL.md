@@ -23,7 +23,7 @@ description: Use when developing Python desktop applications in this project - r
 1. 检查项目根目录是否存在 `start.bat`
 2. **存在** → 直接执行 `start.bat`
 3. **不存在** → 创建 `start.bat`，内容应包含：
-   - 设置 UTF-8 编码 (`chcp 65001`)
+   - 设置 UTF-8 编码
    - 切换到脚本所在目录 (`cd /d "%~dp0"`)
    - 检查并安装依赖 (`pip install -r requirements.txt`)
    - 启动主程序 (`python <入口文件>`)
@@ -47,20 +47,22 @@ python <entry>.py %*
 当用户要求构建/打包时：
 
 1. 检查 git 管理状态，确保项目已纳入版本控制
-2. 确认版本号：检查 `version.py` 是否存在，不存在则创建；询问用户是否需要更新版本号
-3. **更新 helpdocs 文档**（详见 helpdocs 文档更新规则）
-4. **更新 README.md**
-5. 检查项目根目录是否存在 `release.bat`
-6. **存在** → 继续往下执行
-7. **不存在** → 创建 `release.bat`，内容应包含：
+2. 检查 git 工作区状态，如有未提交的修改，询问用户是否先提交（用户同意则提交后再继续，拒绝则跳过）
+3. 确认版本号：检查 `version.py` 是否存在，不存在则创建；询问用户是否需要更新版本号
+4. **更新 helpdocs 文档**（详见 helpdocs 文档更新规则）
+5. **更新 README.md**
+6. 检查项目根目录是否存在 `release.bat`
+7. **存在** → 继续往下执行
+8. **不存在** → 创建 `release.bat`，内容应包含：
    - 检查并安装 PyInstaller
    - 使用 PyInstaller 打包为单文件可执行程序
    - 使用 Inno Setup 生成安装包
    - 输出到 `dist/` 和 `installer/` 目录
-8. 检查 git 工作区状态，如有未提交的修改，询问用户是否先提交（用户同意则提交后再继续，拒绝则跳过）
-9. 执行 `release.bat`
+9. 提交 README.md，helpdocs 文档，release.bat 文档
+10. 执行 `release.bat`
+11. 完成，提示生成包体，然后退出skill
 
-### release.bat 模板
+### release.bat 模板 (模板是个一般形式，可以根据各自项目的特殊性做定制化改造)
 
 release.bat 完整流程：PyInstaller 打包 exe → Inno Setup 生成 Windows 安装包。
 
@@ -158,13 +160,13 @@ VERSION = "1.0.0"
    - 提示用户：远程仓库地址可后续通过 `git remote add origin <url>` 补充
 3. **已存在** → 进入下一项检查
 
-### 2. 检查工作区是否有未提交修改（对应流程第 8 步，执行 release.bat 前执行）
+### 2. 检查工作区是否有未提交修改（对应流程第 2 步，早执行，防止用户忘记提交自己的代码修改）
 
 1. 执行 `git status --porcelain` 检查工作区
-2. **无未提交修改** → 进入第 9 步执行 `release.bat`
+2. **无未提交修改** → 进入后续步骤
 3. **有未提交修改** → 询问用户是否提交：
-   - 用户同意 → 提交本次打包涉及的更改（version.py、helpdocs、README 等）后，进入第 9 步执行 `release.bat`
-   - 用户拒绝 → 跳过提交，进入第 9 步执行 `release.bat`
+   - 用户同意 → 提交本次打包涉及的更改后，进入下一步
+   - 用户拒绝 → 跳过提交，进入下一步
 
 ### .gitignore 模板
 
