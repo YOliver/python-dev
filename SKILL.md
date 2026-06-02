@@ -32,14 +32,14 @@ description: Use when developing Python desktop applications in this project - r
 ### start.bat 模板
 
 **重要：**
-- GUI 程序必须使用 `pythonw`（无控制台）+ `start` 命令启动，避免后台残留 cmd 黑窗口。
+- 使用 `python` 启动，保留控制台窗口以便调试（查看 print 输出、异常堆栈等）。
 - bat 文件**必须纯英文**，不可包含中文（包括注释和 echo），否则在部分系统上会因编码问题导致命令解析失败。
 
 ```bat
 @echo off
 cd /d "%~dp0"
 pip show <main-dep> >nul 2>&1 || pip install -r requirements.txt
-start "" pythonw <entry>.py %*
+python <entry>.py %*
 ```
 
 ## 构建打包流程
@@ -254,7 +254,6 @@ __pycache__/
 | 只生成 exe 不生成安装包 | release.bat 中必须包含 Inno Setup 打包步骤 |
 | 缺少 installer.iss 就运行 ISCC | 先检查 installer.iss 是否存在，不存在则创建 |
 | start.bat 不检查依赖 | 首次运行应自动安装依赖 |
-| GUI 程序用 `python` 启动导致 cmd 窗口残留 | 使用 `start "" pythonw` 启动，隐藏控制台 |
 | bat 文件中写中文导致乱码和命令解析失败 | **bat 文件必须使用纯 ASCII/英文**，不要用 `chcp 65001`（在部分系统不可靠），中文注释和 echo 输出一律改为英文 |
 | 打包前没有 git 管理 | 打包开始前必须检查并初始化 git，确保代码有版本控制 |
 | 没有统一版本号管理 | 使用 `version.py` 作为版本号唯一源头，installer.iss 和 README 同步 |
