@@ -47,16 +47,17 @@ start "" pythonw <entry>.py %*
 当用户要求构建/打包/发布时：
 
 1. 确认版本号：检查 `version.py` 是否存在，不存在则创建；询问用户是否需要更新版本号
-2. 检查项目根目录是否存在 `release.bat`
-3. **存在** → 执行 `release.bat`
-4. **不存在** → 创建 `release.bat`，内容应包含：
+2. **更新 helpdocs 文档**（详见 helpdocs 文档更新规则）
+3. **更新 README.md**
+4. 检查项目根目录是否存在 `release.bat`
+5. **存在** → 执行 `release.bat`
+6. **不存在** → 创建 `release.bat`，内容应包含：
    - 检查并安装 PyInstaller
    - 使用 PyInstaller 打包为单文件可执行程序
    - 使用 Inno Setup 生成安装包
    - 输出到 `dist/` 和 `installer/` 目录
-5. 创建后执行
-6. 更新 README.md
-7. 检查 git 管理状态，确保项目已纳入版本控制
+7. 创建后执行
+8. 检查 git 管理状态，确保项目已纳入版本控制
 
 ### release.bat 模板
 
@@ -223,7 +224,7 @@ __pycache__/
 
 ### 更新时机
 
-在构建发布包流程中，**README.md 更新之前、git 提交之前**，执行 helpdocs 更新：
+在构建发布包流程中，**构建/打包启动前**，执行 helpdocs 更新（即版本号确认后、release.bat 执行前）：
 
 1. 读取 `version.py` 获取版本号
 2. 执行 `git rev-parse HEAD` 获取 commit ID
