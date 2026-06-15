@@ -1,6 +1,6 @@
 ---
 name: python-dev
-description: Use when developing Python desktop applications in this project - running the program, building release packages, or managing start/release scripts
+description: Use when developing Python desktop applications in this project - running the program, building release packages, managing start/release scripts, or adding help documentation
 ---
 
 # Python 开发工作流
@@ -15,6 +15,7 @@ description: Use when developing Python desktop applications in this project - r
 - 用户想要**构建安装包/打包**时
 - 用户提到 "start"、"run"、"启动"、"运行"
 - 用户提到 "build"、"release"、"打包"、"构建"
+- 用户提到 "添加帮助文档"、"帮助按钮"、"帮助菜单" 时
 
 ## 启动程序流程
 
@@ -249,6 +250,65 @@ __pycache__/
 4. 读取 `git config` 获取开发者信息
 5. 更新 `helpdocs/about.md`、`helpdocs/welcome.md`
 6. 检查 `helpdocs/使用手册.md` 中版本号是否需要同步更新
+
+## 帮助文档功能
+
+当用户要求添加帮助文档到项目中时，按照以下规范实现。
+
+### 触发词
+
+- "添加帮助文档"、"帮助按钮"、"帮助菜单"
+
+### 菜单结构
+
+在菜单栏添加「帮助」菜单，包含三个子菜单项：
+
+```
+帮助
+  ├── 欢迎       → 打开 helpdocs/welcome.md
+  ├── 使用手册   → 打开 helpdocs/使用手册.md
+  └── 软件信息   → 打开 helpdocs/about.md
+```
+
+### 表现方式
+
+**对话框形式**：
+- 模态对话框（`QDialog`），弹出后阻塞主窗口
+- 默认大小 700×500，可拖动边缘调整大小
+
+**文档渲染**：
+- 使用 Python `markdown` 库将 `.md` 文件转换为 HTML
+- 在 `QTextBrowser` 中显示渲染后的 HTML 内容
+- 支持表格（`tables` 扩展）、代码块（`fenced_code` 扩展）、换行（`nl2br` 扩展）
+- CSS 样式：Microsoft YaHei 字体、代码灰色背景、表格边框
+
+**搜索功能**：
+- 搜索框位于对话框顶部，支持实时搜索
+- 不区分大小写（PySide6/Qt6 默认行为）
+- 所有匹配项黄色高亮，当前项橙色高亮
+- 底部导航栏：上一个/下一个按钮 + 匹配计数（"第 X/Y 项"）
+- 无匹配项时显示"无结果"，禁用跳转按钮
+
+### 实现文件
+
+| 文件 | 说明 |
+|------|------|
+| `gdm/gui/help_dialog.py` | `HelpDialog` 类，包含 `md_to_html()`、`get_help_doc_path()`、搜索高亮逻辑 |
+| `gdm/gui/main_window.py` | 在 `_init_menubar()` 中添加「帮助」菜单，新增 `_open_help_doc()` 方法 |
+| `requirements.txt` | 添加 `markdown>=3.5.0` 依赖 |
+| `GameDevManager.spec` | `datas=[('helpdocs', 'helpdocs')]` 将帮助文档打包到 exe |
+| `tests/test_help_dialog.py` | 单元测试 + 集成测试 |
+
+### 关键实现细节
+
+**路径兼容**：`get_help_doc_path()` 同时兼容开发环境（`helpdocs/` 目录）和打包环境（`sys._MEIPASS`）。
+
+**搜索实现**：使用 `QTextDocument.find()` 查找匹配项，通过 `QTextCharFormat` 设置背景色实现高亮。搜索时先重新加载原始 HTML 清除旧高亮，再逐项查找并应用高亮格式。
+
+**错误处理**：
+- 文档不存在时弹出 `QMessageBox.warning()`
+- Markdown 转换异常时降级显示原始 Markdown 文本
+- 打包后路径访问失败时提示用户重新安装
 
 ## Common Mistakes
 
