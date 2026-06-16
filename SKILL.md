@@ -1,6 +1,6 @@
 ---
 name: python-dev
-description: Use when developing Python desktop applications in this project - running the program, building release packages, managing start/release scripts, or adding help documentation
+description: Use when developing Python desktop applications in this project - running the program, building release packages, managing start/release scripts, adding help documentation, or adding menu items
 ---
 
 # Python 开发工作流
@@ -16,6 +16,7 @@ description: Use when developing Python desktop applications in this project - r
 - 用户提到 "start"、"run"、"启动"、"运行"
 - 用户提到 "build"、"release"、"打包"、"构建"
 - 用户提到 "添加帮助文档"、"帮助按钮"、"帮助菜单" 时
+- 用户提到 "添加菜单项"、"新增菜单"、"加一个按钮" 时
 
 ## 启动程序流程
 
@@ -251,13 +252,83 @@ __pycache__/
 5. 更新 `helpdocs/about.md`、`helpdocs/welcome.md`
 6. 检查 `helpdocs/使用手册.md` 中版本号是否需要同步更新
 
-## 帮助文档功能
+## 添加菜单项功能
 
-当用户要求添加帮助文档到项目中时，按照以下规范实现。
+当用户要求添加新的菜单项/功能按钮时，按照以下规范实现。**触发词：「添加菜单项」「新增菜单」「加一个按钮」。**
 
-### 触发词
+### 表现方式
 
-- "添加帮助文档"、"帮助按钮"、"帮助菜单"
+菜单栏中的菜单项不显示下拉框，所有操作按钮展示在工具栏（QToolBar）中：
+
+```
+菜单栏    文件      工具      帮助
+          ──────── ──────── ────────
+工具栏   [打开] [保存] [退出]       ← 随菜单切换
+```
+
+- 菜单栏保留标题（文件、工具、帮助等），仅用于切换工具栏内容
+- 工具栏根据当前选中的菜单动态显示对应的操作按钮
+- 每个操作按钮对应一个 QAction，绑定 triggered 信号
+
+### 实现方式
+
+在 `_init_menubar()` 方法中：
+
+1. 创建 QAction 并绑定 triggered 信号
+2. **不调用** `menu.addAction()`（否则会出现下拉框，破坏统一性）
+3. 将 Action 添加到 `self._toolbar_actions[menu_name]` 列表中
+4. `aboutToShow` 信号连接保持不变
+
+```python
+# 创建 Action
+new_action = QAction("操作名称", self)
+new_action.triggered.connect(self._handler_method)
+
+# 添加到工具栏字典（不要 addAction 到菜单）
+self._toolbar_actions["菜单名"].append(new_action)
+```
+
+### 完整示例
+
+以下代码展示了如何在工具菜单中添加三个操作按钮，工具栏呈现方式与文件菜单、帮助菜单一致：
+
+```python
+# ── 工具菜单 ──
+tool_menu = menubar.addMenu("工具")
+
+rename_action = QAction("批量重命名", self)
+rename_action.triggered.connect(self._open_rename_dialog)
+
+extract_action = QAction("全量解压", self)
+extract_action.triggered.connect(self._open_extract_all)
+
+clear_cache_act = QAction("清空缩略图缓存", self)
+clear_cache_act.triggered.connect(self._on_clear_cache)
+
+tool_menu.aboutToShow.connect(lambda: self._update_toolbar("工具"))
+
+# 存入字典，供工具栏使用
+self._toolbar_actions = {
+    "文件": [open_action, save_action, exit_action],
+    "工具": [rename_action, extract_action, clear_cache_act],  # 无 addAction
+    "帮助": [manual_action, welcome_action, about_action],
+}
+```
+
+### 关键规则
+
+| 规则 | 说明 |
+|------|------|
+| 不调用 menu.addAction() | 避免出现下拉框 |
+| Action 加入 _toolbar_actions | 工具栏自动展示 |
+| aboutToShow 信号保留 | 点击菜单标题切换工具栏内容 |
+| triggered 绑定回调 | 操作逻辑与菜单标题分离 |
+
+### 注意事项
+
+- 此模式是本项目所有菜单的统一表现方式，必须严格遵守
+- 不要用 `menu.addAction()` 的方式添加菜单项，会导致下拉框与另外两个菜单行为不一致
+- Action 变量必须在 `_toolbar_actions` 之前创建，否则字典中引用不到
 
 ### 菜单结构
 
