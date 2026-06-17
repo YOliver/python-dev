@@ -21,7 +21,7 @@ build、release、打包、构建、发布
    - 使用 Inno Setup 生成安装包
    - 输出到 `dist/` 和 `installer/` 目录
 9. 检查项目根目录是否存在 `installer.iss`，**不存在** → 读取 `installer-iss.md` 获取模板后创建
-10. 提交 README.md，helpdocs 文档，release.bat 文档
+10. 提交 README.md，helpdocs 文档，release.bat 文档，installer.iss 文档
 11. 执行 `release.bat`
 12. 完成，提示生成包体，然后退出 skill
 
